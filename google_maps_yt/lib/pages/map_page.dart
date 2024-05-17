@@ -24,13 +24,33 @@ class MapPage extends StatefulWidget {
 
 class Toilet {
   final String name;
+  final String address;
   final double latitude;
   final double longitude;
+  final int toiletnum;
+  final int excellentnum;
+  final int fairnum;
+  final int goodnum;
+  final int familynum;
+  final int poornum;
+  // final double rating;
+  // final int ratingnum;
+  final String type;
 
   Toilet({
     required this.name,
+    required this.address,
     required this.latitude,
     required this.longitude,
+    required this.toiletnum,
+    required this.excellentnum,
+    required this.fairnum,
+    required this.goodnum,
+    required this.familynum,
+    required this.poornum,
+    // required this.rating,
+    // required this.ratingnum,
+    required this.type,
   });
 }
 
@@ -116,6 +136,92 @@ class _MapPageState extends State<MapPage> {
     setState(() {
       _nearestMarkerLocation = nearestLocation;
     });
+  }
+  void _onMarkerTapped(BuildContext context, Toilet toilet) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext bc) {
+        return Container(
+          height: 200,
+          color: Color(0xFF737373),  // 背景色，可自訂
+          child: Container(
+            // padding: EdgeInsets.all(10),  // 增加內距，讓UI更加美观
+            decoration: BoxDecoration(
+              color: Theme.of(context).canvasColor,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(10),
+                topRight: Radius.circular(10),
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.place),
+                  title: RichText(
+                    text: TextSpan(
+                      style: DefaultTextStyle.of(context).style,
+                      children: <TextSpan>[
+                        TextSpan(text: '${toilet.name} ', style: TextStyle(fontSize: 20.0, color: Colors.blue)),
+                        TextSpan(text: '(${toilet.type})', style: TextStyle(fontSize: 20.0, color: Colors.blue)),
+                        // TextSpan(text: '評分: ${toilet.rating} 星', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                  subtitle: RichText(
+                    text: TextSpan(
+                      style: DefaultTextStyle.of(context).style,
+                      children: <TextSpan>[
+                        TextSpan(text: toilet.address, style: TextStyle(fontSize: 16.0, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    toilet.familynum != 0 ?
+                    Image.asset(
+                      'assets/images/family.png',
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                    ) :
+                    SizedBox(width: 1,),
+                    toilet.poornum != 0 ?
+                    Image.asset(
+                      'assets/images/poor.png',
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                    ) :
+                    SizedBox(width: 10,),
+                    Icon(Icons.star, color: Colors.yellow[500]),
+                    Icon(Icons.star, color: Colors.yellow[500]),
+                    Icon(Icons.star, color: Colors.yellow[500]),
+                    const Icon(Icons.star, color: Colors.black),
+                    const Icon(Icons.star, color: Colors.black),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      child: Text("路線"),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    ElevatedButton(
+                      child: Text("評分"),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // 计算两个地理坐标之间的距离（单位：米）
@@ -209,14 +315,26 @@ class _MapPageState extends State<MapPage> {
       for (final toiletData in toiletsData) {
         final Toilet toilet = Toilet(
           name: toiletData['Name'],
+          address: toiletData['Address'],
           latitude: toiletData['Latitude'],
           longitude: toiletData['Longitude'],
+          toiletnum: toiletData['ToiletNum'],
+          excellentnum: toiletData['Excellent'],
+          fairnum: toiletData['Fair'],
+          goodnum: toiletData['Good'],
+          familynum: toiletData['FamilyRestroom'],
+          poornum: toiletData['Poor'],
+          // rating: toiletData['Rating'],
+          // ratingnum: toiletData['RatingCount'],
+          type: toiletData['Type'],
+
         );
         final Marker marker = Marker(
           markerId: MarkerId(toilet.name),
           position: LatLng(toilet.latitude, toilet.longitude),
           icon: customIcon,
           infoWindow: InfoWindow(title: toilet.name),
+          onTap: () => _onMarkerTapped(context, toilet),
         );
         markers.add(marker);
       }
