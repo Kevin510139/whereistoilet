@@ -33,8 +33,8 @@ class Toilet {
   final int goodnum;
   final int familynum;
   final int poornum;
-  // final double rating;
-  // final int ratingnum;
+  final double rating;
+  final int ratingnum;
   final String type;
 
   Toilet({
@@ -48,8 +48,8 @@ class Toilet {
     required this.goodnum,
     required this.familynum,
     required this.poornum,
-    // required this.rating,
-    // required this.ratingnum,
+    required this.rating,
+    required this.ratingnum,
     required this.type,
   });
 }
@@ -164,18 +164,25 @@ class _MapPageState extends State<MapPage> {
                       children: <TextSpan>[
                         TextSpan(text: '${toilet.name} ', style: TextStyle(fontSize: 20.0, color: Colors.blue)),
                         TextSpan(text: '(${toilet.type})', style: TextStyle(fontSize: 20.0, color: Colors.blue)),
-                        // TextSpan(text: '評分: ${toilet.rating} 星', style: TextStyle(color: Colors.red)),
+                        // TextSpan(text: toilet.rating == 0? '評分: 無':'評分: ${toilet.rating} 星', style: TextStyle(color: Colors.red)),
                       ],
                     ),
                   ),
-                  subtitle: RichText(
-                    text: TextSpan(
-                      style: DefaultTextStyle.of(context).style,
-                      children: <TextSpan>[
-                        TextSpan(text: toilet.address, style: TextStyle(fontSize: 16.0, color: Colors.grey)),
-                      ],
-                    ),
-                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${toilet.address}', style: TextStyle(fontSize: 16.0, color: Colors.grey)),
+                      SizedBox(height: 5),
+                      Row(children: [
+                        ..._buildRatingStars(toilet.rating),
+                        SizedBox(width: 5), // Add space between rating stars and rating number
+                        Text(
+                          '(${toilet.ratingnum})',
+                          style: TextStyle(fontSize: 16.0, color: Colors.grey),
+                        )
+                      ])
+                    ],
+                  )
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -196,11 +203,6 @@ class _MapPageState extends State<MapPage> {
                       fit: BoxFit.cover,
                     ) :
                     SizedBox(width: 10,),
-                    Icon(Icons.star, color: Colors.yellow[500]),
-                    Icon(Icons.star, color: Colors.yellow[500]),
-                    Icon(Icons.star, color: Colors.yellow[500]),
-                    const Icon(Icons.star, color: Colors.black),
-                    const Icon(Icons.star, color: Colors.black),
                   ],
                 ),
                 Row(
@@ -324,8 +326,8 @@ class _MapPageState extends State<MapPage> {
           goodnum: toiletData['Good'],
           familynum: toiletData['FamilyRestroom'],
           poornum: toiletData['Poor'],
-          // rating: toiletData['Rating'],
-          // ratingnum: toiletData['RatingCount'],
+          rating: toiletData['Rating'].toDouble(),
+          ratingnum: toiletData['RatingCount'],
           type: toiletData['Type'],
 
         );
@@ -387,5 +389,20 @@ class _MapPageState extends State<MapPage> {
     setState(() {
       _polylines[id] = polyline;
     });
+  }
+}
+
+List<Widget> _buildRatingStars(double rating){
+  if (rating == 0) {
+    return List.generate(5, (index) => const Icon(Icons.star, color: Colors.grey));
+  }
+  else{
+    return List.generate(
+      5,
+      (index) => Icon(
+        index < rating ? Icons.star : Icons.star_border,
+        color: index < rating ? Colors.yellow[500] : Colors.grey,
+      ),
+    );
   }
 }
