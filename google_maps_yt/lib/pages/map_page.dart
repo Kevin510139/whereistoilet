@@ -73,10 +73,12 @@ class _MapPageState extends State<MapPage> {
   LatLng? _nearestMarkerLocation;//存最近廁所位置
   List<Marker> _markers = []; // 存儲廁所標記的列表
   Map<PolylineId, Polyline> _polylines = {}; // 存儲路線的映射
+  User? currentUser; // 假设您有方式获取当前登录用户信息
 
   @override
   void initState() {
     super.initState();
+    currentUser = null; // 假设您在某处设置了当前用户
     _getCustomIcon().then((icon) {
       setState(() {
         customIcon = icon;
@@ -88,6 +90,18 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(currentUser != null ? currentUser!.email : "Not logged in"), // 显示用户邮箱
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.exit_to_app),
+            onPressed: () {
+              currentUser != null?
+              currentUser = null:null;
+            },
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           GoogleMap(
@@ -301,6 +315,8 @@ class _MapPageState extends State<MapPage> {
                                               right: 10),
                                         )
                                       );
+                                      result == 'Login successfully' ?
+                                      currentUser = User(email: emailController.text, password: passwordController.text):currentUser=null;
                                     }).catchError((error) {
                                       Navigator.pop(context);  // 出錯也要關閉對話框
                                       ScaffoldMessenger.of(context).showSnackBar(
