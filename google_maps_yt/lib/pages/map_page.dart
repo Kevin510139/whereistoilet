@@ -391,7 +391,7 @@ class _MapPageState extends State<MapPage> {
         return AlertDialog(
           title: Text("評分"),
           content: RatingBar(
-            initialRating: 3,
+            initialRating: 0,
             itemCount: 5,
             direction: Axis.horizontal,
             allowHalfRating: true,
@@ -432,7 +432,7 @@ class _MapPageState extends State<MapPage> {
         return AlertDialog(
           title: Text("評分"),
           content: RatingBar(
-            initialRating: 3,
+            initialRating: 0,
             itemCount: 5,
             direction: Axis.horizontal,
             allowHalfRating: true,
