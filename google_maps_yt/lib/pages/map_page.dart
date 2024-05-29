@@ -10,6 +10,7 @@ import 'package:google_maps_yt/consts.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/widgets.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 // 先讀取圖示檔案
 BitmapDescriptor customIcon = BitmapDescriptor.defaultMarker;
@@ -36,6 +37,7 @@ class Toilet {
   final double rating;
   final int ratingnum;
   final String type;
+  final int restroomid;
 
   Toilet({
     required this.name,
@@ -51,6 +53,7 @@ class Toilet {
     required this.rating,
     required this.ratingnum,
     required this.type,
+    required this.restroomid,
   });
 }
 
@@ -74,6 +77,7 @@ class _MapPageState extends State<MapPage> {
   List<Marker> _markers = []; // 存儲廁所標記的列表
   Map<PolylineId, Polyline> _polylines = {}; // 存儲路線的映射
   User? currentUser; // 假设您有方式获取当前登录用户信息
+  String? accesstoken;
 
   @override
   void initState() {
@@ -241,103 +245,127 @@ class _MapPageState extends State<MapPage> {
                     ElevatedButton(
                       child: Text("評分"),
                       onPressed:() {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Text("用戶登錄"),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  TextField(
-                                    controller: emailController,
-                                    decoration: InputDecoration(
-                                      labelText: "帳號",
-                                      hintText: "請輸入您的帳號"
+                        if (currentUser == null){
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text("用戶登錄"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    TextField(
+                                      controller: emailController,
+                                      decoration: InputDecoration(
+                                        labelText: "帳號",
+                                        hintText: "請輸入您的帳號"
+                                      ),
                                     ),
+                                    TextField(
+                                      controller: passwordController,
+                                      obscureText: true,
+                                      decoration: InputDecoration(
+                                        labelText: "密碼",
+                                        hintText: "請輸入您的密碼"
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: Text("註冊"),
+                                    onPressed: () {
+                                      _registerUser(emailController.text, passwordController.text).then((result) {
+                                        Navigator.pop(context);  // 關閉對話框
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(result),
+                                            duration: Duration(seconds: 3),
+                                            behavior: SnackBarBehavior.floating,
+                                            margin: EdgeInsets.only(
+                                                bottom: MediaQuery.of(context).size.height - 150,
+                                                left: 10,
+                                                right: 10),
+                                          )
+                                        );
+                                      }).catchError((error) {
+                                        Navigator.pop(context);  // 出錯也要關閉對話框
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text("Error"),
+                                            duration: Duration(seconds: 3),
+                                            behavior: SnackBarBehavior.floating,
+                                            margin: EdgeInsets.only(
+                                                bottom: MediaQuery.of(context).size.height - 150,
+                                                left: 10,
+                                                right: 10),
+                                          )
+                                        );
+                                      });
+                                    },
                                   ),
-                                  TextField(
-                                    controller: passwordController,
-                                    obscureText: true,
-                                    decoration: InputDecoration(
-                                      labelText: "密碼",
-                                      hintText: "請輸入您的密碼"
-                                    ),
+                                  TextButton(
+                                    child: Text("登入"),
+                                    onPressed: () {
+                                      _UserLogin(emailController.text, passwordController.text).then((result) {
+                                        Navigator.pop(context);  // 关闭对话框
+                                        if (result["message"] == "Login successfully") {
+                                          accesstoken = result["accessToken"]!;
+                                          currentUser = User(email: emailController.text, password: passwordController.text);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(result["message"]!),
+                                              duration: Duration(seconds: 3),
+                                              behavior: SnackBarBehavior.floating,
+                                              margin: EdgeInsets.only(
+                                                bottom: MediaQuery.of(context).size.height - 150,
+                                                left: 10,
+                                                right: 10
+                                              ),
+                                            )
+                                          );
+                                        } else {
+                                          currentUser = null;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(result["message"]!),
+                                              duration: Duration(seconds: 3),
+                                              behavior: SnackBarBehavior.floating,
+                                              margin: EdgeInsets.only(
+                                                bottom: MediaQuery.of(context).size.height - 150,
+                                                left: 10,
+                                                right: 10
+                                              ),
+                                            )
+                                          );
+                                        }
+                                      }).catchError((error) {
+                                        Navigator.pop(context);  // 出错也要关闭对话框
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text("Error: $error"),  // 显示错误详情
+                                            duration: Duration(seconds: 3),
+                                            behavior: SnackBarBehavior.floating,
+                                            margin: EdgeInsets.only(
+                                              bottom: MediaQuery.of(context).size.height - 150,
+                                              left: 10,
+                                              right: 10
+                                            ),
+                                          )
+                                        );
+                                      });
+                                    },
                                   ),
                                 ],
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: Text("註冊"),
-                                  onPressed: () {
-                                    _registerUser(emailController.text, passwordController.text).then((result) {
-                                      Navigator.pop(context);  // 關閉對話框
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(result),
-                                          duration: Duration(seconds: 3),
-                                          behavior: SnackBarBehavior.floating,
-                                          margin: EdgeInsets.only(
-                                              bottom: MediaQuery.of(context).size.height - 150,
-                                              left: 10,
-                                              right: 10),
-                                        )
-                                      );
-                                    }).catchError((error) {
-                                      Navigator.pop(context);  // 出錯也要關閉對話框
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text("Error"),
-                                          duration: Duration(seconds: 3),
-                                          behavior: SnackBarBehavior.floating,
-                                          margin: EdgeInsets.only(
-                                              bottom: MediaQuery.of(context).size.height - 150,
-                                              left: 10,
-                                              right: 10),
-                                        )
-                                      );
-                                    });
-                                  },
-                                ),
-                                TextButton(
-                                  child: Text("登入"),
-                                  onPressed: () {
-                                    _UserLogin(emailController.text, passwordController.text).then((result) {
-                                      Navigator.pop(context);  // 關閉對話框
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(result),
-                                          duration: Duration(seconds: 3),
-                                          behavior: SnackBarBehavior.floating,
-                                          margin: EdgeInsets.only(
-                                              bottom: MediaQuery.of(context).size.height - 150,
-                                              left: 10,
-                                              right: 10),
-                                        )
-                                      );
-                                      result == 'Login successfully' ?
-                                      currentUser = User(email: emailController.text, password: passwordController.text):currentUser=null;
-                                    }).catchError((error) {
-                                      Navigator.pop(context);  // 出錯也要關閉對話框
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text("Error"),
-                                          duration: Duration(seconds: 3),
-                                          behavior: SnackBarBehavior.floating,
-                                          margin: EdgeInsets.only(
-                                              bottom: MediaQuery.of(context).size.height - 150,
-                                              left: 10,
-                                              right: 10),
-                                        )
-                                      );
-                                    });
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
+                              );
+                            },
+                          );
+                        }
+                        else{
+                          // String accesstoken = getAccessToken();
+                          _showRatingDialog(context, toilet, accesstoken);
+                        }
+                      }
                     ),
                   ],
                 ),
@@ -347,6 +375,119 @@ class _MapPageState extends State<MapPage> {
         );
       },
     );
+  }
+  // String getAccessToken(){
+
+  // }
+  // 定义显示评分对话框的函数
+  void _showRatingDialog(BuildContext contextm, Toilet toilet, String? accesstoken) {
+    double? _currentRating = 3.0;  // 用于存储用户的评分，初始设为3
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("評分"),
+          content: RatingBar(
+            initialRating: 3,
+            itemCount: 5,
+            direction: Axis.horizontal,
+            allowHalfRating: true,
+            itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+            onRatingUpdate: (rating) {
+              _currentRating = rating;
+            },
+            ratingWidget: RatingWidget(
+              full: Icon(Icons.star, color: Colors.orange),  // 完整星星
+              half: Icon(Icons.star_half, color: Colors.orange),  // 半星
+              empty: Icon(Icons.star_border, color: Colors.orange),  // 空星
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text("取消"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("提交"),
+              onPressed: () {
+                  _submitRating(_currentRating, toilet.restroomid, accesstoken);
+                  Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  // 廁所評分後端
+  void _submitRating(double? rating, int? restroomid, String? AccessToken) async {
+    final url = Uri.parse('https://find-public-toilet.adaptable.app/rate/${restroomid}');
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $AccessToken"  // 添加accessToken到请求头
+      },
+      body: jsonEncode({
+        "score": rating,
+      }),
+    );
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Rating sent successfully!"),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 150,
+            left: 10,
+            right: 10
+          ),
+        ),
+      );
+    }else if (response.statusCode == 500){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Server Error"),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 150,
+            left: 10,
+            right: 10
+          ),
+        ),
+      );
+    }else if (response.statusCode == 400){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Please input score"),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 150,
+            left: 10,
+            right: 10
+          ),
+        ),
+      );
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("You have already rated this toilet"),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 150,
+            left: 10,
+            right: 10
+          ),
+        ),
+      );
+    }
   }
 
   // 计算两个地理坐标之间的距离（单位：米）
@@ -452,6 +593,7 @@ class _MapPageState extends State<MapPage> {
           rating: toiletData['Rating'].toDouble(),
           ratingnum: toiletData['RatingCount'],
           type: toiletData['Type'],
+          restroomid: toiletData['RestroomID'],
 
         );
         final Marker marker = Marker(
@@ -535,8 +677,8 @@ Future<String> _registerUser(String email, String password) async {
     return('Failed to register user');
   }
 }
-// 註冊使用者的函數
-Future<String> _UserLogin(String email, String password) async {
+// 使用者登入
+Future<Map<String, String>> _UserLogin(String email, String password) async {
   final url = Uri.parse('https://find-public-toilet.adaptable.app/login');
   final response = await http.post(
     url,
@@ -546,14 +688,26 @@ Future<String> _UserLogin(String email, String password) async {
       "password": password,
     }),
   );
-
   if (response.statusCode == 200) {
-    return("Login successfully");
-  }else {
-    return('Failed to login');
+    var data = jsonDecode(response.body);
+    if (data['access_token'] != null) {
+      return {
+        "message": "Login successfully",
+        "accessToken": data['access_token']
+      };
+    } else {
+      return {
+        "message": "Failed to login",
+        "accessToken": ""
+      };
+    }
+  } else {
+    return {
+      "message": "Failed to login",
+      "accessToken": ""
+    };
   }
 }
-
 List<Widget> _buildRatingStars(double rating){
   if (rating == 0) {
     return List.generate(5, (index) => const Icon(Icons.star, color: Colors.grey));
