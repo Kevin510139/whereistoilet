@@ -240,7 +240,13 @@ class _MapPageState extends State<MapPage> {
                   children: [
                     ElevatedButton(
                       child: Text("路線"),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.pop(context);  // 关闭底部弹窗
+                        setState(() {
+                          _nearestMarkerLocation = LatLng(toilet.latitude, toilet.longitude);
+                        });
+                        _updatePolyline();
+                      },
                     ),
                     ElevatedButton(
                       child: Text("評分"),
@@ -734,6 +740,7 @@ class _MapPageState extends State<MapPage> {
           restroomid: toiletData['RestroomID'],
 
         );
+
         final Marker marker = Marker(
           markerId: MarkerId(toilet.name),
           position: LatLng(toilet.latitude, toilet.longitude),
@@ -745,7 +752,6 @@ class _MapPageState extends State<MapPage> {
       }
       setState(() {
         _markers = markers;
-        _calculateNearestMarkerLocation(_markers, _currentLocation!);
       });
     } else {
       throw Exception('Failed to load toilets');
