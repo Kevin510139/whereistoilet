@@ -284,30 +284,8 @@ class _MapPageState extends State<MapPage> {
                                       onPressed: () {
                                         _registerUser(emailController.text, passwordController.text).then((result) {
                                           Navigator.pop(context);  // 關閉對話框
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(result),
-                                              duration: Duration(seconds: 3),
-                                              behavior: SnackBarBehavior.floating,
-                                              margin: EdgeInsets.only(
-                                                  bottom: MediaQuery.of(context).size.height - 150,
-                                                  left: 10,
-                                                  right: 10),
-                                            )
-                                          );
                                         }).catchError((error) {
                                           Navigator.pop(context);  // 出錯也要關閉對話框
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text("Error"),
-                                              duration: Duration(seconds: 3),
-                                              behavior: SnackBarBehavior.floating,
-                                              margin: EdgeInsets.only(
-                                                  bottom: MediaQuery.of(context).size.height - 150,
-                                                  left: 10,
-                                                  right: 10),
-                                            )
-                                          );
                                         });
                                       },
                                     ),
@@ -316,35 +294,11 @@ class _MapPageState extends State<MapPage> {
                                       onPressed: () {
                                         _UserLogin(emailController.text, passwordController.text).then((result) {
                                           Navigator.pop(context);  // 关闭对话框
-                                          if (result["message"] == "Login successfully") {
+                                          if (result["accessToken"] != null) {
                                             accesstoken = result["accessToken"]!;
                                             currentUser = User(email: emailController.text, password: passwordController.text);
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: Text(result["message"]!),
-                                                duration: Duration(seconds: 3),
-                                                behavior: SnackBarBehavior.floating,
-                                                margin: EdgeInsets.only(
-                                                  bottom: MediaQuery.of(context).size.height - 150,
-                                                  left: 10,
-                                                  right: 10
-                                                ),
-                                              )
-                                            );
                                           } else {
                                             currentUser = null;
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: Text(result["message"]!),
-                                                duration: Duration(seconds: 3),
-                                                behavior: SnackBarBehavior.floating,
-                                                margin: EdgeInsets.only(
-                                                  bottom: MediaQuery.of(context).size.height - 150,
-                                                  left: 10,
-                                                  right: 10
-                                                ),
-                                              )
-                                            );
                                           }
                                         }).catchError((error) {
                                           Navigator.pop(context);  // 出错也要关闭对话框
@@ -526,6 +480,7 @@ class _MapPageState extends State<MapPage> {
     );
     print(response.statusCode);
     if (response.statusCode == 200) {
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Rating updated successfully!"),
@@ -539,6 +494,7 @@ class _MapPageState extends State<MapPage> {
         ),
       );
     }else if (response.statusCode == 500){
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Server Error"),
@@ -552,6 +508,7 @@ class _MapPageState extends State<MapPage> {
         ),
       );
     }else if (response.statusCode == 400){
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Please input score"),
@@ -580,6 +537,7 @@ class _MapPageState extends State<MapPage> {
       }),
     );
     if (response.statusCode == 200) {
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Rating sent successfully!"),
@@ -593,6 +551,7 @@ class _MapPageState extends State<MapPage> {
         ),
       );
     }else if (response.statusCode == 500){
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Server Error"),
@@ -606,6 +565,7 @@ class _MapPageState extends State<MapPage> {
         ),
       );
     }else if (response.statusCode == 400){
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Please input score"),
@@ -619,6 +579,7 @@ class _MapPageState extends State<MapPage> {
         ),
       );
     }else{
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("You have already rated this toilet"),
@@ -634,6 +595,131 @@ class _MapPageState extends State<MapPage> {
     }
   }
 
+  // 註冊使用者的函數
+  Future<void> _registerUser(String email, String password) async {
+    final url = Uri.parse('https://find-public-toilet.adaptable.app/register');
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "email": email,
+        "password": password,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("User registered successfully"),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 150,
+            left: 10,
+            right: 10
+          ),
+        ),
+      );
+    }
+    else if(response.statusCode == 409){
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Email already exists"),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 150,
+            left: 10,
+            right: 10
+          ),
+        ),
+      );
+    } else {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to register"),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 150,
+            left: 10,
+            right: 10
+          ),
+        ),
+      );
+    }
+  }
+  
+  // 使用者登入
+  Future<Map<String, String>> _UserLogin(String email, String password) async {
+    final url = Uri.parse('https://find-public-toilet.adaptable.app/login');
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "email": email,
+        "password": password,
+      }),
+    );
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      if (data['access_token'] != null) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Login successfully"),
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height - 150,
+              left: 10,
+              right: 10
+            ),
+          ),
+        );
+        return {
+          "accessToken": data['access_token']
+        };
+      } else {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to login"),
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height - 150,
+              left: 10,
+              right: 10
+            ),
+          ),
+        );
+        return {
+          "accessToken": ""
+        };
+      }
+    } else {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to login"),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height - 150,
+            left: 10,
+            right: 10
+          ),
+        ),
+      );
+      return {
+        "accessToken": ""
+      };
+    }
+  }
   // 计算两个地理坐标之间的距离（单位：米）
   double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     const double radius = 6371; // 地球半径，单位为公里
@@ -798,58 +884,6 @@ class _MapPageState extends State<MapPage> {
     setState(() {
       _polylines[id] = polyline;
     });
-  }
-}
-// 註冊使用者的函數
-Future<String> _registerUser(String email, String password) async {
-  final url = Uri.parse('https://find-public-toilet.adaptable.app/register');
-  final response = await http.post(
-    url,
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode({
-      "email": email,
-      "password": password,
-    }),
-  );
-
-  if (response.statusCode == 201) {
-    return("User registered successfully");
-  }
-  else if(response.statusCode == 409){
-    return("Email already exists");
-  } else {
-    return('Failed to register user');
-  }
-}
-// 使用者登入
-Future<Map<String, String>> _UserLogin(String email, String password) async {
-  final url = Uri.parse('https://find-public-toilet.adaptable.app/login');
-  final response = await http.post(
-    url,
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode({
-      "email": email,
-      "password": password,
-    }),
-  );
-  if (response.statusCode == 200) {
-    var data = jsonDecode(response.body);
-    if (data['access_token'] != null) {
-      return {
-        "message": "Login successfully",
-        "accessToken": data['access_token']
-      };
-    } else {
-      return {
-        "message": "Failed to login",
-        "accessToken": ""
-      };
-    }
-  } else {
-    return {
-      "message": "Failed to login",
-      "accessToken": ""
-    };
   }
 }
 List<Widget> _buildRatingStars(double rating){
